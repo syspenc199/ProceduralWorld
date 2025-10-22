@@ -2,27 +2,30 @@ using UnityEngine;
 
 public static class MeshGenerator
 {
-    public static MeshData GenerateTerrainMesh(float[,] heightMap)
+    public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve heightCurve, int levelOfDetail)
     {
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
         float topLeftX = (width-1)/-2f;
-        float topLeftZ = (height-1)/2f;
+        float topLeftZ = (height - 1) / 2f;
 
-        MeshData meshData = new MeshData(width, height);
+        int meshLODIncrement = levelOfDetail * 2;
+        int verticiesPerLine = (width - 1) / meshLODIncrement + 1;
+
+        MeshData meshData = new MeshData(verticiesPerLine, verticiesPerLine);
         int vertexIndex = 0;
 
-        for(int y = 0; y < height; y++)
+        for(int y = 0; y < height; y += meshLODIncrement)
         {
-            for(int x = 0; x < width; x++)
+            for (int x = 0; x < width; x += meshLODIncrement)
             {
-                meshData.Verticies[vertexIndex] = new Vector3(topLeftX + x, heightMap[x,y], topLeftZ - y);
+                meshData.Verticies[vertexIndex] = new Vector3(topLeftX + x, heightCurve.Evaluate(heightMap[x,y]) * heightMultiplier, topLeftZ - y);
                 meshData.UVs[vertexIndex] = new Vector2(x / (float)width, y / (float)height);
 
                 if(x < width-1 && y < height-1)
                 {
-                    meshData.AddTriangle(vertexIndex, vertexIndex + width + 1, vertexIndex + width);
-                    meshData.AddTriangle(vertexIndex + width + 1, vertexIndex, vertexIndex + 1);
+                    meshData.AddTriangle(vertexIndex, vertexIndex + verticiesPerLine + 1, vertexIndex + verticiesPerLine); // Add the trianges to every square in the mesh grid
+                    meshData.AddTriangle(vertexIndex + verticiesPerLine + 1, vertexIndex, vertexIndex + 1);
                 }
 
                 vertexIndex++;
@@ -50,7 +53,7 @@ public class MeshData{
     public void AddTriangle(int a, int b, int c)
     {
         Triangles[triangleIndex] = a;
-        Triangles[triangleIndex + 1] = b;
+        Triangles[triangleIndex + 1] = b; // Calculate the coordinates of the trianges
         Triangles[triangleIndex + 2] = c;
         triangleIndex += 3;
     }
