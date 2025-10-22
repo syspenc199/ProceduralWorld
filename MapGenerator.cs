@@ -6,10 +6,9 @@ public class MapGenerator : MonoBehaviour
     public enum DrawMode {NoiseMap, ColorMap, Mesh};
     public DrawMode drawMode;
 
-    [Min(1)]
-    public int MapWidth;
-    [Min(1)]
-    public int MapHeight;
+    const int mapChunkSize = 241;
+    [Range(1,6)]
+    public int LevelOfDetail;
     [Min(0)]
     public float ScaleValue;
     public Vector2 Offset;
@@ -20,6 +19,8 @@ public class MapGenerator : MonoBehaviour
     public float Persistence;
     [Min(1)]
     public float Lacunarity;
+    public float HeightMultiplier;
+    public AnimationCurve MeshHeightCurve;
 
     public bool AutoUpdate;
 
@@ -27,19 +28,19 @@ public class MapGenerator : MonoBehaviour
 
     public void GenerateMap()
     {
-        float[,] noiseMap = Noise.GenerateNoiseMap(MapWidth, MapHeight, Seed, ScaleValue, Offset, Octaves, Persistence, Lacunarity);
+        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, Seed, ScaleValue, Offset, Octaves, Persistence, Lacunarity);
 
-        Color[] colorMap = new Color[MapWidth * MapHeight];
-        for (int y = 0; y < MapHeight; y++) // Create a color map of the pixels, whether it's a grayscale noise map or a full-blown color map
+        Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
+        for (int y = 0; y < mapChunkSize; y++) // Create a color map of the pixels, whether it's a grayscale noise map or a full-blown color map
         {
-            for (int x = 0; x < MapWidth; x++)
+            for (int x = 0; x < mapChunkSize; x++)
             {
                 float currentHeight = noiseMap[x, y];
                 for (int i = 0; i < regions.Length; i++)
                 {
                     if (currentHeight <= regions[i].height)
                     {
-                        colorMap[y * MapWidth + x] = regions[i].color; 
+                        colorMap[y * mapChunkSize + x] = regions[i].color; 
                         break;
                     }
                 }
@@ -54,11 +55,11 @@ public class MapGenerator : MonoBehaviour
         }
         else if(drawMode == DrawMode.ColorMap)
         { 
-            display.DrawTexture(TextureGenerator.TextureFromColorMap(colorMap, MapWidth, MapHeight));
+            display.DrawTexture(TextureGenerator.TextureFromColorMap(colorMap, mapChunkSize, mapChunkSize));
         }
         else if(drawMode == DrawMode.Mesh)
         {
-            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap), TextureGenerator.TextureFromColorMap(colorMap, MapWidth, MapHeight));
+            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, HeightMultiplier, MeshHeightCurve, LevelOfDetail), TextureGenerator.TextureFromColorMap(colorMap, mapChunkSize, mapChunkSize));
         }
     }
 }
