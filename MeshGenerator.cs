@@ -9,7 +9,7 @@ public static class MeshGenerator
         float topLeftX = (width-1)/-2f;
         float topLeftZ = (height - 1) / 2f;
 
-        int meshLODIncrement = levelOfDetail * 2;
+        int meshLODIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
         int verticiesPerLine = (width - 1) / meshLODIncrement + 1;
 
         MeshData meshData = new MeshData(verticiesPerLine, verticiesPerLine);
